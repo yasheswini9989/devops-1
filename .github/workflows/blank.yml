@@ -1,0 +1,89 @@
+name: CI-WORKFLOW
+
+on:
+  push:
+    branches: ["master", "main", "dev"]
+
+  workflow_dispatch:
+    inputs:
+      username:
+        description: "Enter your username"
+        required: true
+        default: "Raham"
+        type: string
+
+      environment:
+        description: "Select deployment environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+
+      deploy:
+        description: "Do you want to deploy?"
+        required: true
+        default: false
+        type: boolean
+
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Inputs
+        run: |
+          echo "Username: ${{ inputs.username }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Deploy: ${{ inputs.deploy }}"
+
+      - name: Build
+        run: npm install
+
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test
+        run: npm test
+
+
+  security:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Security Check
+        run: echo "Security scan completed"
+
+      - name: Deploy
+        if: ${{ inputs.deploy == true }}
+        run: |
+          echo "Deploying to ${{ inputs.environment }}"
+          echo "Deployed by ${{ inputs.username }}"
+
+      - name: Skip Deployment
+        if: ${{ inputs.deploy == false }}
+        run: echo "Deployment skipped"
+
+      - name: Rollback
+        if: failure()
+        run: echo "Rollback is done"
+
+  info:
+     runs-on: ubuntu-latest
+     steps:
+       - name: Output of the Job
+         run: echo "${{ toJson(github) }}"
