@@ -1,6 +1,6 @@
 name: CI-WORKFLOW 
 
-on:
+on: 
   push:
     branches: ["master", "main", "dev"]
 
